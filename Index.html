@@ -100,17 +100,14 @@
   </head>
   <body>
     <div class="container">
-      <!-- ด้านซ้าย -->
       <div class="left">
         <h2 style="text-align: center">Link Management</h2>
         <div id="tables-container"></div>
       </div>
 
-      <!-- ด้านขวา -->
       <div class="right">
         <h2>จัดการลิงก์และตาราง</h2>
 
-        <!-- Form for adding/deleting links and tables -->
         <div class="form-container">
           <h3>เพิ่ม/ลบ ลิงก์</h3>
           <select id="tableSelect"></select>
@@ -131,35 +128,32 @@
           </div>
         </div>
 
-        <!-- สถานะ -->
         <div class="status-message" id="statusMessage"></div>
       </div>
     </div>
 
     <script>
       window.onload = function () {
-        // ดึงข้อมูลตารางและลิงก์จาก localStorage
+        if (localStorage.getItem("loggedIn") !== "true") {
+          window.location.href = "login.html";
+        }
+
         const tables = JSON.parse(localStorage.getItem("tables")) || [];
         const links = JSON.parse(localStorage.getItem("links")) || {};
 
-        // แสดงตารางที่เก็บไว้ใน localStorage
         tables.forEach((tableName) => {
           createTable(tableName, links[tableName] || []);
         });
 
-        // อัพเดตตัวเลือกใน select
         updateTableSelect();
       };
 
       function createTable(tableName, links) {
         const leftSection = document.querySelector(".left");
-
-        // สร้างชื่อหัวตาราง
         const newTableHeading = document.createElement("h2");
         newTableHeading.textContent = tableName;
         leftSection.appendChild(newTableHeading);
 
-        // สร้างตาราง
         const newTable = document.createElement("table");
         newTable.id = tableName;
         newTable.innerHTML = `
@@ -185,10 +179,8 @@
         const select = document.getElementById("tableSelect");
         const tableDeleteSelect = document.getElementById("tableDeleteSelect");
 
-        // ดึงข้อมูลตารางจาก localStorage
         const tables = JSON.parse(localStorage.getItem("tables")) || [];
 
-        // อัพเดตตัวเลือกใน select สำหรับการเลือกตาราง
         select.innerHTML = "";
         tableDeleteSelect.innerHTML = "";
         tables.forEach((tableName) => {
@@ -239,12 +231,11 @@
             : "http://" + linkURL;
 
           const newRow = table.querySelector("tbody").insertRow();
-          newRow.innerHTML = `
+          newRow.innerHTML = ` 
             <td>${linkName}</td>
             <td><button onclick="window.open('${fullURL}', '_blank')">Click</button></td>
           `;
 
-          // เก็บลิงก์ลงใน localStorage
           let links = JSON.parse(localStorage.getItem("links")) || {};
           if (!links[tableId]) {
             links[tableId] = [];
@@ -268,7 +259,6 @@
         );
 
         if (row) {
-          // ถามยืนยันจากผู้ใช้
           const confirmDelete = window.confirm(
             `คุณแน่ใจที่จะลบลิงก์ '${linkName}'?`
           );
@@ -276,7 +266,6 @@
             row.remove();
             showStatusMessage(`ลิงก์ '${linkName}' ถูกลบแล้ว`);
 
-            // ลบลิงก์ออกจาก localStorage
             let links = JSON.parse(localStorage.getItem("links")) || {};
             links[tableId] = links[tableId].filter(
               (link) => link.name !== linkName
@@ -294,7 +283,6 @@
         const tableName = document.getElementById("newTableName").value;
 
         if (tableName) {
-          // ถามยืนยันจากผู้ใช้
           const confirmAddTable = window.confirm(
             `คุณแน่ใจที่จะเพิ่มตารางชื่อ '${tableName}'?`
           );
@@ -310,24 +298,15 @@
               </thead>
               <tbody></tbody>
             `;
+            document.querySelector(".left").appendChild(newTable);
 
-            const leftSection = document.querySelector(".left");
-            const newTableHeading = document.createElement("h2");
-            newTableHeading.textContent = tableName;
-            leftSection.appendChild(newTableHeading);
-            leftSection.appendChild(newTable);
-
-            // เก็บตารางลงใน localStorage
-            let tables = JSON.parse(localStorage.getItem("tables")) || [];
+            const tables = JSON.parse(localStorage.getItem("tables")) || [];
             tables.push(tableName);
             localStorage.setItem("tables", JSON.stringify(tables));
 
-            // อัพเดตตัวเลือกใน select สำหรับการเลือกตาราง
             updateTableSelect();
 
             showStatusMessage(`ตาราง '${tableName}' ถูกเพิ่มแล้ว`);
-          } else {
-            showStatusMessage("การเพิ่มตารางถูกยกเลิก");
           }
         } else {
           showStatusMessage("กรุณากรอกชื่อของตาราง");
@@ -336,45 +315,39 @@
 
       function deleteTable() {
         const tableName = document.getElementById("tableDeleteSelect").value;
+
         if (tableName) {
-          // ถามยืนยันจากผู้ใช้
-          const confirmDelete = window.confirm(
+          const confirmDeleteTable = window.confirm(
             `คุณแน่ใจที่จะลบตาราง '${tableName}'?`
           );
-          if (confirmDelete) {
+          if (confirmDeleteTable) {
             const table = document.getElementById(tableName);
-            table.remove();
+            if (table) {
+              table.remove();
 
-            // ลบตารางออกจาก localStorage
-            let tables = JSON.parse(localStorage.getItem("tables")) || [];
-            tables = tables.filter((name) => name !== tableName);
-            localStorage.setItem("tables", JSON.stringify(tables));
+              let tables = JSON.parse(localStorage.getItem("tables")) || [];
+              tables = tables.filter((table) => table !== tableName);
+              localStorage.setItem("tables", JSON.stringify(tables));
 
-            // ลบลิงก์ออกจาก localStorage
-            let links = JSON.parse(localStorage.getItem("links")) || {};
-            delete links[tableName];
-            localStorage.setItem("links", JSON.stringify(links));
+              updateTableSelect();
 
-            updateTableSelect();
-
-            showStatusMessage(`ตาราง '${tableName}' ถูกลบแล้ว`);
+              showStatusMessage(`ตาราง '${tableName}' ถูกลบแล้ว`);
+            }
           } else {
             showStatusMessage("การลบตารางถูกยกเลิก");
           }
         } else {
-          showStatusMessage("กรุณาเลือกตารางที่ต้องการลบ");
+          showStatusMessage("ไม่พบตารางที่ต้องการลบ");
         }
       }
 
-      // ฟังก์ชันสำหรับแสดงข้อความสถานะ
       function showStatusMessage(message) {
-        const statusMessageDiv = document.getElementById("statusMessage");
-        statusMessageDiv.textContent = message;
-        statusMessageDiv.style.display = "block";
-
+        const statusMessage = document.getElementById("statusMessage");
+        statusMessage.textContent = message;
+        statusMessage.style.display = "block";
         setTimeout(() => {
-          statusMessageDiv.style.display = "none";
-        }, 5000);
+          statusMessage.style.display = "none";
+        }, 3000);
       }
     </script>
   </body>
